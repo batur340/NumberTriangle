@@ -89,7 +89,17 @@ public class NumberTriangle {
      */
     public int retrieve(String path) {
         // TODO implement this method
-        return -1;
+        NumberTriangle current = this;
+        for (char c : path.toCharArray()) {
+            if (c == 'l') {
+                current = current.left;
+            } else if (c == 'r') {
+                current = current.right;
+            } else {
+                throw new IllegalArgumentException("Invalid character in path: " + c);
+            }
+        }
+        return current.getRoot();
     }
 
     /** Read in the NumberTriangle structure from a file.
@@ -107,28 +117,39 @@ public class NumberTriangle {
         // open the file and get a BufferedReader object whose methods
         // are more convenient to work with when reading the file contents.
         InputStream inputStream = NumberTriangle.class.getClassLoader().getResourceAsStream(fname);
+        if (inputStream == null) throw new FileNotFoundException("File not found: " + fname);
+
         BufferedReader br = new BufferedReader(new InputStreamReader(inputStream));
 
+        // We don't know how many lines yet, so store them in a temporary array
+        String[] lines = new String[100]; // assume max 100 rows
+        int rowCount = 0;
 
-        // TODO define any variables that you want to use to store things
-
-        // will need to return the top of the NumberTriangle,
-        // so might want a variable for that.
-        NumberTriangle top = null;
-
-        String line = br.readLine();
-        while (line != null) {
-
-            // remove when done; this line is included so running starter code prints the contents of the file
-            System.out.println(line);
-
-            // TODO process the line
-
-            //read the next line
-            line = br.readLine();
+        String line;
+        while ((line = br.readLine()) != null) {
+            lines[rowCount++] = line.trim();
         }
         br.close();
-        return top;
+
+        // Create triangle row arrays
+        NumberTriangle[][] triangle = new NumberTriangle[rowCount][];
+        for (int i = 0; i < rowCount; i++) {
+            String[] nums = lines[i].split("\\s+");
+            triangle[i] = new NumberTriangle[nums.length];
+            for (int j = 0; j < nums.length; j++) {
+                triangle[i][j] = new NumberTriangle(Integer.parseInt(nums[j]));
+            }
+        }
+
+        // Wire the parent-child relationships
+        for (int i = 0; i < rowCount - 1; i++) {
+            for (int j = 0; j < triangle[i].length; j++) {
+                triangle[i][j].setLeft(triangle[i + 1][j]);
+                triangle[i][j].setRight(triangle[i + 1][j + 1]);
+            }
+        }
+
+        return triangle[0][0]; // return the topmost node
     }
 
     public static void main(String[] args) throws IOException {
